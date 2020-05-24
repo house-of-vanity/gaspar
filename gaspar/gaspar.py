@@ -1,12 +1,13 @@
 import os
+import sys
 import logging
 from urllib import parse
-from rutracker import Torrent
-from notify import update_watcher
 from datetime import datetime
-from database import DataBase
 from telegram import *
 from telegram.ext import Updater, MessageHandler, CommandHandler, filters
+from .rutracker import Torrent
+from .notify import update_watcher
+from .database import DataBase
 
 logging.basicConfig(
     level=logging.INFO,
@@ -25,6 +26,9 @@ def sizeof_fmt(num, suffix='B'):
 
 def main():
     token = os.environ.get('TG_TOKEN')
+    if not token:
+        log.error("Env var TG_TOKEN isn't set.")
+        sys.exit(1)
     """Run bot."""
 
     def add(update, context):
@@ -78,8 +82,8 @@ def main():
     updater = Updater(token, use_context=True)
     update_watcher(updater.bot)
 
-    updater.dispatcher.add_handler(MessageHandler(filters.Filters.text, add))
     updater.dispatcher.add_handler(CommandHandler('list', list_alerts))
+    updater.dispatcher.add_handler(MessageHandler(filters.Filters.text, add))
 
     updater.start_polling()
     updater.idle()

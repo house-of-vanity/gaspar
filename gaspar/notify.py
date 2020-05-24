@@ -1,10 +1,10 @@
 import time
 import threading
 import logging
-from rutracker import Torrent
 from datetime import datetime
+from .rutracker import Torrent
 
-UPDATE_INTERVAL = 6 * 60 * 60 # in secs
+UPDATE_INTERVAL = 2 * 60 * 60 # in secs.
 
 log = logging.getLogger("gaspar.%s" % __name__)
 

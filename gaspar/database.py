@@ -6,6 +6,7 @@
 
 import sqlite3
 import logging
+import os
 
 log = logging.getLogger("gaspar.%s" % __name__)
 
@@ -18,7 +19,7 @@ class DBInitException(Exception):
 class DataBase:
     """This class create or use existent SQLite database file. It provides 
     high-level methods for database."""
-    def __init__(self, scheme, basefile='data.sqlite'):
+    def __init__(self, scheme, basefile='/usr/share/gaspar/data.sqlite'):
         """
           Constructor creates new SQLite database if 
           it doesn't exist. Uses SQL code from file for DB init.
@@ -30,6 +31,7 @@ class DataBase:
         self.basefile = basefile
         try:
             conn = self.connect(basefile=basefile)
+            log.info("Using '%s' base file.", os.path.realpath(basefile))
         except:
             log.debug('Could not connect to DataBase.')
             return None

@@ -1,13 +1,13 @@
 import urllib.request, json 
-from database import DataBase
 import logging
 import re
+from .database import DataBase
 
 log = logging.getLogger("gaspar.%s" % __name__)
 
 class Torrent:
     def __init__(self, tor_id=None):
-        self.db = DataBase("scheme.sql")
+        self.db = DataBase("/usr/share/gaspar/scheme.sql")
         self.api_url = "http://api.rutracker.org/v1/"
         self.tor_id = tor_id
         self.meta = None
