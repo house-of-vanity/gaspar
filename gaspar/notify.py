@@ -3,10 +3,11 @@ import threading
 import logging
 from datetime import datetime
 from .rutracker import Torrent
+from .tools import format_topic
 
 UPDATE_INTERVAL = 2 * 60 * 60 # in secs.
 
-log = logging.getLogger("gaspar.%s" % __name__)
+log = logging.getLogger(__name__)
 
 torrent = Torrent()
 
@@ -43,6 +44,14 @@ def update_watcher(bot):
         <b>💿Size:</b> {sizeof_fmt(torrent.meta['size'])}
         <b>#️⃣Hash: </b> {torrent.meta['info_hash']}
         <b>📅Updated: </b>{reg_time}\n"""
+
+                    msg = format_topic(
+                            torrent.meta['id'],
+                            torrent.meta['topic_title'],
+                            torrent.meta['size'],
+                            torrent.meta['info_hash'],
+                            torrent.meta['reg_time'],
+                            pre='<i>Topic has been updated</i>\n')
                     subs = torrent.db.get_subscribers(alert['id'])
                     for sub in subs:
                         bot.sendMessage(sub, msg, parse_mode='HTML', disable_web_page_preview=True)

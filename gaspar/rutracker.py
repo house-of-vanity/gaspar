@@ -3,7 +3,7 @@ import logging
 import re
 from .database import DataBase
 
-log = logging.getLogger("gaspar.%s" % __name__)
+log = logging.getLogger(__name__)
 
 class Torrent:
     def __init__(self, tor_id=None):

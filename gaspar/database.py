@@ -8,7 +8,7 @@ import sqlite3
 import logging
 import os
 
-log = logging.getLogger("gaspar.%s" % __name__)
+log = logging.getLogger(__name__)
 
 class DBInitException(Exception):
     """ Exception at DB Init """

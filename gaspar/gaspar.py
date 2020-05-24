@@ -2,27 +2,19 @@ import os
 import sys
 import logging
 from urllib import parse
-from datetime import datetime
 from telegram import *
 from telegram.ext import Updater, MessageHandler, CommandHandler, filters
 from .rutracker import Torrent
 from .notify import update_watcher
 from .database import DataBase
+from .tools import format_topic
 
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-log = logging.getLogger("gaspar.%s" % __name__)
+log = logging.getLogger(__name__)
 
 torrent = Torrent()
-
-def sizeof_fmt(num, suffix='B'):
-    num = int(num)
-    for unit in ['','Ki','Mi','Gi','Ti','Pi','Ei','Zi']:
-        if abs(num) < 1024.0:
-            return "%3.1f%s%s" % (num, unit, suffix)
-        num /= 1024.0
-    return "%.1f%s%s" % (num, 'Yi', suffix)
 
 def main():
     token = os.environ.get('TG_TOKEN')
@@ -50,13 +42,14 @@ def main():
         torrent.db.save_tor(torrent.meta)
         torrent.db.save_user(update.message.chat)
         torrent.db.save_alert(update.message.chat['id'], torrent.meta['id'])
-        reg_time = datetime.utcfromtimestamp(int(torrent.meta['reg_time'])
-                ).strftime('%b-%d-%Y')
-        msg = f"""{torrent.meta['topic_title']}
-<b>Size:</b> {sizeof_fmt(torrent.meta['size'])}
-<b>Hash: </b> {torrent.meta['info_hash']}
-<b>Updated: </b>{reg_time}"""
-        update.message.reply_text(msg, parse_mode='HTML')
+        msg = format_topic(
+                torrent.meta['id'],
+                torrent.meta['topic_title'],
+                torrent.meta['size'],
+                torrent.meta['info_hash'],
+                torrent.meta['reg_time'],
+                pre='You will be alerted about\n')
+        update.message.reply_text(msg, parse_mode='HTML', disable_web_page_preview=True)
 
 
     def list_alerts(update, context):
@@ -70,12 +63,12 @@ def main():
             return True
         msg = "<b>Configured alerts:</b>\n"
         for alert in alerts:
-            reg_time = datetime.utcfromtimestamp(int(alert['reg_time'])
-                    ).strftime('%b-%d-%Y')
-            msg += f"""<a href='https://rutracker.org/forum/viewtopic.php?t={alert['id']}'><b>{alert['topic_title']}</b></a>
-    <b>💿Size:</b> {sizeof_fmt(alert['size'])}
-    <b>#️⃣Hash: </b> {alert['info_hash']}
-    <b>📅Updated: </b>{reg_time}\n"""
+            msg += format_topic(
+                    alert['id'],
+                    alert['topic_title'],
+                    alert['size'],
+                    alert['info_hash'],
+                    alert['reg_time'])
         update.message.reply_text(msg, parse_mode='HTML', disable_web_page_preview=True)
 
 
