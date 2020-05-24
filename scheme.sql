@@ -33,7 +33,8 @@ CREATE TABLE IF NOT EXISTS "users" (
         );
 CREATE TABLE IF NOT EXISTS "alerts" (
         user_id TEXT,
-        tor_id TEXT
+        tor_id TEXT,
+        UNIQUE(user_id, tor_id)
         );
 COMMIT;
 

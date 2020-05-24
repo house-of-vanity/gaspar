@@ -7,7 +7,10 @@
 import sqlite3
 import logging
 
-log = logging.getLogger(__name__)
+log = logging.getLogger("gaspar.%s" % __name__)
+
+class DBInitException(Exception):
+    """ Exception at DB Init """
 
 
 # class DataBase create or use existent SQLite database file. It provides 
@@ -39,9 +42,11 @@ class DataBase:
                     cursor.executescript(sql)
                 except Exception as e:
                     log.debug('Could not create scheme - %s', e)
+                    raise DBInitException
             else:
                 log.debug("Error! cannot create the database connection.")
-        log.info('DB created.')
+                raise DBInitException
+        log.info('DB connected.')
         self.close(conn)
 
     def connect(self, basefile):
@@ -81,130 +86,9 @@ class DataBase:
         #log.debug("Close connection to %s", self.basefile)
         conn.close()
 
-    def add_mod(self, file_meta, author='Anonymous'):
-        secure_name =  file_meta['secure_name']
-        real_name = file_meta['real_name']
-        mime = file_meta['mime']
-        file_hash = file_meta['hash']
-        title = file_meta['title']
-        sample = file_meta['sample']
-        message = file_meta['message']
-        metaphone = file_meta['metaphone']
-        sql = """INSERT OR IGNORE INTO 
-              mods('secure_name', 'real_name', 'mime', 'hash', 
-                  'author', 'title', 'sample', 'message', 'metaphone')
-              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)"""
-        self.execute(sql, (
-              secure_name,
-              real_name,
-              mime,
-              file_hash,
-              author,
-              title,
-              sample,
-              message,
-              metaphone,
-              ))
-        return True
-
-    def get_mods(self, limit, offset):
-        sql = """SELECT 
-              rowid, real_name, title, mime, 
-              strftime('%s', date) as str_time, author, date, hash, secure_name 
-              FROM mods LIMIT ?,?"""
-        mods = list()
-        result = self.execute(sql, (offset, limit))
-        for mod in result:
-            mods.append(
-                {
-                    'id': mod[0],
-                    'real_name': mod[1],
-                    'title': mod[2],
-                    'mimetype': mod[3],
-                    'str_time': mod[4],
-                    'author': mod[5],
-                    'time': mod[6],
-                    'hash': mod[7],
-                    'secure_name': mod[8],
-                }
-            )
-        return mods
-
-    def get_mod(self, mod_id):
-        sql = """SELECT 
-              rowid, real_name, secure_name, mime,
-              strftime('%s', date) as str_time, author, date, 
-              hash, title, sample, message 
-              FROM mods WHERE rowid = ?"""
-        result = self.execute(sql, (mod_id,))
-        if result:
-            meta = result[0]
-            mod = {
-                'id': meta[0],
-                'real_name': meta[1],
-                'secure_name': meta[2],
-                'mimetype': meta[3],
-                'time': meta[4],
-                'author': meta[5],
-                'str_time': meta[6],
-                'hash': meta[7],
-                'title': meta[8],
-                'sample': meta[9],
-                'message': meta[10],
-            }
-        else:
-            mod = list()
-        return mod
-
-    def find_mod(self, param=None):
-        """
-          Looking for mod dublicates.
-          :param param: name or hash of module to search.
-          :type param: string
-          :return: list
-        """
-        sql = """SELECT rowid FROM mods WHERE real_name == ? OR
-              hash == ? ORDER BY rowid DESC LIMIT 1"""
-        result = self.execute(sql, (param, param))
-        return result
-
-    def search(self, query):
-        """
-          Perform module search through the base.
-        """
-        sql = """SELECT rowid, secure_name, title, mime, date, 
-              strftime('%s', date) as str_time FROM mods 
-              WHERE 
-              secure_name LIKE ? OR 
-              title LIKE ? OR
-              message LIKE ? OR
-              sample LIKE ?"""
-        query_mask = f"%{query}%"
-        result = self.execute(sql, tuple(query_mask for i in range(0, 4)))
-        log.debug(result)
-        return result
-
-    def signin(self, name, password):
-        """
-          auth client
-        """
-        result = {"status": False, 'message': 'User is invalid.'}
-        sql = "SELECT name, password FROM users WHERE name = ?"
-        ret = self.execute(sql, (name,))
-        if len(ret) == 0:
-            result = {'status': False, 'message': 'User doesn\'t exist'}
-        elif len(ret) == 1:
-            stored_hash = ret[0][1]
-            print(stored_hash, password)
-            print(verify_password(stored_hash, password))
-            if verify_password(stored_hash, password):
-                result = {"status": True, 'message': 'User is valid.'}
-        return result
-
     def copy_to_history(self, tor_id):
         sql = "SELECT * FROM torrents WHERE id = ?"
         attrs = self.execute(sql, (tor_id,))[0]
-        print(attrs)
         sql = """INSERT OR IGNORE INTO torrents_history(
                     'id', 
                     'info_hash', 
@@ -215,7 +99,7 @@ class DataBase:
                     'tor_status', 
                     'seeders', 
                     'topic_title', 
-                    'seeder_last_seen',
+                    'seeder_last_seen'
                 )  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ? )"""
         self.execute(sql, attrs)
 
@@ -288,5 +172,45 @@ class DataBase:
                     chat_instance['first_name'],
                     chat_instance['last_name'],
                     ))
-        return True
+    def save_alert(self, user_id, tor_id):
+        sql = """INSERT OR IGNORE INTO alerts(
+                'user_id',
+                'tor_id'
+                ) VALUES (?, ?)"""
+        self.execute(sql, (
+                    user_id,
+                    tor_id
+                    ))
+
+    def get_alerts(self, user_id=None):
+        if user_id:
+            sql = """SELECT t.size, t.reg_time, t.topic_title, t.id, t.info_hash FROM 
+                    torrents t LEFT JOIN alerts a ON a.tor_id = t.id
+                    WHERE a.user_id = ?"""
+            raw = self.execute(sql, (
+                        user_id,
+                        ))
+        else:
+            sql = """SELECT t.size, t.reg_time, t.topic_title, t.id, t.info_hash FROM 
+                    torrents t LEFT JOIN alerts a ON a.tor_id = t.id GROUP BY t.id"""
+            raw = self.execute(sql, ())
+        alerts = list()
+        for alert in raw:
+            tmp = dict()
+            tmp['id'] = alert[3]
+            tmp['reg_time'] = alert[1]
+            tmp['topic_title'] = alert[2]
+            tmp['size'] = alert[0]
+            tmp['info_hash'] = alert[4]
+            alerts.append(tmp)
+        return alerts
+
+    def get_subscribers(self, tor_id):
+        sql = "SELECT user_id FROM alerts WHERE tor_id = ?"
+        subs = list()
+        for sub in self.execute(sql, (tor_id,)):
+            subs.append(sub[0])
+        return subs
+    
+
 
