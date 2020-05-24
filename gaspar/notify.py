@@ -40,11 +40,6 @@ def update_watcher(bot):
                     log.info("Found update for [%s] %s", torrent.meta['id'], torrent.meta['topic_title'])
                     reg_time = datetime.utcfromtimestamp(int(torrent.meta['reg_time'])
                             ).strftime('%b-%d-%Y')
-                    msg = f"""<i>Topic updated</i>\n<a href='https://rutracker.org/forum/viewtopic.php?t={torrent.meta['id']}'><b>{torrent.meta['topic_title']}</b></a>
-        <b>💿Size:</b> {sizeof_fmt(torrent.meta['size'])}
-        <b>#️⃣Hash: </b> {torrent.meta['info_hash']}
-        <b>📅Updated: </b>{reg_time}\n"""
-
                     msg = format_topic(
                             torrent.meta['id'],
                             torrent.meta['topic_title'],
@@ -55,7 +50,7 @@ def update_watcher(bot):
                     subs = torrent.db.get_subscribers(alert['id'])
                     for sub in subs:
                         bot.sendMessage(sub, msg, parse_mode='HTML', disable_web_page_preview=True)
-                    time.sleep(UPDATE_INTERVAL / 60 / 60 / 4.)
+                    time.sleep(60)
                 time.sleep(UPDATE_INTERVAL)
     update_thread = threading.Thread(target=__thread)
     update_thread.start()
