@@ -68,7 +68,8 @@ def main():
                     alert['topic_title'],
                     alert['size'],
                     alert['info_hash'],
-                    alert['reg_time'])
+                    alert['reg_time'],
+                    pre="\n")
         update.message.reply_text(msg, parse_mode='HTML', disable_web_page_preview=True)
 
 
