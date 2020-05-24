@@ -1,6 +1,6 @@
 from datetime import datetime
 
-def format_topic(tor_id, topic_title, size, info_hash, reg_time, pre=None):
+def format_topic(tor_id, topic_title, size, info_hash, reg_time, pre=''):
     def sizeof_fmt(num, suffix='B'):
         num = int(num)
         for unit in ['','Ki','Mi','Gi','Ti','Pi','Ei','Zi']:
