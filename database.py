@@ -215,7 +215,7 @@ class DataBase:
                     'tor_status', 
                     'seeders', 
                     'topic_title', 
-                    'seeder_last_seen'
+                    'seeder_last_seen',
                 )  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ? )"""
         self.execute(sql, attrs)
 
@@ -250,7 +250,7 @@ class DataBase:
                         tor_data["id"],
                     ))
 
-    def save_tor(self, tor_data, chat_instance):
+    def save_tor(self, tor_data):
         sql = """INSERT OR IGNORE INTO torrents(
                     'id', 
                     'info_hash', 
@@ -261,9 +261,8 @@ class DataBase:
                     'tor_status', 
                     'seeders', 
                     'topic_title', 
-                    'seeder_last_seen',
-                    'user_id'
-                )  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ? )"""
+                    'seeder_last_seen'
+                )  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"""
         self.execute(sql, (
                         tor_data["id"],
                         tor_data["info_hash"],
@@ -275,8 +274,8 @@ class DataBase:
                         tor_data["seeders"],
                         tor_data["topic_title"],
                         tor_data["seeder_last_seen"],
-                        chat_instance['id'],
                     ))
+    def save_user(self, chat_instance):
         sql = """INSERT OR IGNORE INTO users(
                 'id',
                 'username',

@@ -6,12 +6,11 @@ import re
 log = logging.getLogger(__name__)
 
 class Torrent:
-    def __init__(self, tor_id, chat_instance):
+    def __init__(self, tor_id):
         self.db = DataBase("scheme.sql")
         self.api_url = "http://api.rutracker.org/v1/"
         self.meta = self.get_tor_topic_data(tor_id)
         log.debug("Torrent info: %s", self.meta)
-        self.db.save_tor(self.meta, chat_instance)
 
     def get_tor_topic_data(self, tor_id):
         data = dict()

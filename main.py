@@ -1,10 +1,11 @@
+import os
+import logging
+from urllib import parse
 from rutracker import Torrent
 from datetime import datetime
 from database import DataBase
 from telegram import *
 from telegram.ext import Updater, MessageHandler, CommandHandler, filters
-from urllib import parse
-import logging
 
 logging.basicConfig(
     level=logging.DEBUG,
@@ -19,6 +20,7 @@ def sizeof_fmt(num, suffix='B'):
     return "%.1f%s%s" % (num, 'Yi', suffix)
 
 def main():
+    token = os.environ.get('TG_TOKEN')
     """Run bot."""
 
     def add(update, context):
@@ -32,8 +34,12 @@ def main():
         else:
             update.message.reply_text("Send me a URL to rutracker.org topic.")
             return
-        log.debug(update.message.chat)
-        torrent = Torrent(tor_id, update.message.chat)
+        torrent = Torrent(tor_id)
+        torrent.db.save_tor(torrent.meta)
+        torrent.db.save_user(update.message.chat)
+        torrent.db.save_alert(update.message.chat['id'], torrent.meta['id'])
+#       log.debug(torrent.is_outdated())
+#       log.debug(torrent.update())
         reg_time = datetime.utcfromtimestamp(int(torrent.meta['reg_time'])
                 ).strftime('%b-%d')
         msg = f"""{torrent.meta['topic_title']}
@@ -49,7 +55,7 @@ def main():
             'Hello {}'.format(update.message.from_user.first_name))
 
 
-    updater = Updater("539189256:AAHqrL6nTmv5g0mGoPQownO0vrNRvhPFq7I", use_context=True)
+    updater = Updater(token, use_context=True)
 
     updater.dispatcher.add_handler(MessageHandler(filters.Filters.text, add))
 

@@ -10,7 +10,6 @@ CREATE TABLE IF NOT EXISTS "torrents" (
 	"seeders"	TEXT,
 	"topic_title"	TEXT,
 	"seeder_last_seen"	TEXT,
-	"user_id"	TEXT,
 	PRIMARY KEY("id")
 );
 CREATE TABLE IF NOT EXISTS "torrents_history" (
@@ -24,7 +23,6 @@ CREATE TABLE IF NOT EXISTS "torrents_history" (
 	"tor_status" TEXT,
 	"seeders"	TEXT,
 	"topic_title"	TEXT,
-	"user_id"	TEXT,
 	"seeder_last_seen"	TEXT
 );
 CREATE TABLE IF NOT EXISTS "users" (
@@ -32,6 +30,10 @@ CREATE TABLE IF NOT EXISTS "users" (
         username TEXT,
         first_name TEXT,
         last_name TEXT
+        );
+CREATE TABLE IF NOT EXISTS "alerts" (
+        user_id TEXT,
+        tor_id TEXT
         );
 COMMIT;
 
