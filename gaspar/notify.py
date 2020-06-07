@@ -52,6 +52,9 @@ def update_watcher(bot):
                     subs = torrent.db.get_subscribers(alert['id'])
                     for sub in subs:
                         bot.sendMessage(sub, msg, parse_mode='HTML', disable_web_page_preview=True)
+                        host, port = torrent.db.get_client(sub)
+                        if host and port:
+                            add_tor(host, port, torrent.meta['info_hash'])
                     time.sleep(10)
             time.sleep(UPDATE_INTERVAL)
     update_thread = threading.Thread(target=__thread)

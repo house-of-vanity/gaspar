@@ -10,7 +10,7 @@ from .database import DataBase
 from .tools import format_topic
 
 logging.basicConfig(
-    level=logging.DEBUG,
+    level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 log = logging.getLogger(__name__)
 
@@ -73,17 +73,22 @@ def main():
         update.message.reply_text(msg, parse_mode='HTML', disable_web_page_preview=True)
 
     def handle_client(update, context):
+        u_id = update.message.chat['id']
         log.info(
                 "Got /client request from user [%s] %s",
-                update.message.chat['id'],
+                u_id,
                 update.message.from_user.username)
         try:
           host, port = update.message.text.split(':')
+          host = host.split(' ')[1]
         except:
           update.message.reply_text(
               'Send transmission RPC address like <b>host:port</b>',
               parse_mode='HTML',
               disable_web_page_preview=True)
+          return
+        torrent.db.add_client(u_id, host, port)
+        log.info(torrent.db.get_client(u_id))
 
 
     updater = Updater(token, use_context=True)

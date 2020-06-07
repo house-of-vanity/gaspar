@@ -105,6 +105,15 @@ class DataBase:
                 )  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ? )"""
         self.execute(sql, attrs)
 
+    def add_client(self, user_id, host, port):
+        sql = """INSERT OR REPLACE INTO tr_clients(user_id, host, port)
+                    VALUES(?, ?, ?);"""
+        self.execute(sql, (user_id, host, port))
+
+    def get_client(self, user_id):
+        sql = "SELECT host, port FROM tr_clients WHERE user_id = ?"
+        return self.execute(sql, (user_id,))[0]
+
     def get_attr(self, tor_id, attr):
         sql = """SELECT %s FROM torrents WHERE id = ? ORDER BY reg_time DESC LIMIT 1""" % attr
         return self.execute(sql, (tor_id,))[0][0]

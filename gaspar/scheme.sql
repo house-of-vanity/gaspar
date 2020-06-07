@@ -36,5 +36,11 @@ CREATE TABLE IF NOT EXISTS "alerts" (
         tor_id TEXT,
         UNIQUE(user_id, tor_id)
         );
+CREATE TABLE IF NOT EXISTS "tr_clients" (
+        user_id TEXT,
+        host TEXT,
+        port TEXT,
+        UNIQUE(user_id)
+        );
 COMMIT;
 
