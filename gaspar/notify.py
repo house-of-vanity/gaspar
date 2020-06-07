@@ -36,6 +36,7 @@ def update_watcher(bot):
             for alert in raw:
                 alerts.append(alert['id'])
                 log.info("Checking for updates. Configured interval: %sh , [%s secs]", UPDATE_INTERVAL/60/60, UPDATE_INTERVAL)
+                log.info("Checking alert %s", alert['topic_title'])
                 if update(alert['id']):
                     log.info("Found update for [%s] %s", torrent.meta['id'], torrent.meta['topic_title'])
                     reg_time = datetime.utcfromtimestamp(int(torrent.meta['reg_time'])
@@ -50,7 +51,7 @@ def update_watcher(bot):
                     subs = torrent.db.get_subscribers(alert['id'])
                     for sub in subs:
                         bot.sendMessage(sub, msg, parse_mode='HTML', disable_web_page_preview=True)
-                    time.sleep(60)
-                time.sleep(UPDATE_INTERVAL)
+                    time.sleep(10)
+            time.sleep(UPDATE_INTERVAL)
     update_thread = threading.Thread(target=__thread)
     update_thread.start()
