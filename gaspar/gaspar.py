@@ -72,11 +72,25 @@ def main():
                     pre="\n")
         update.message.reply_text(msg, parse_mode='HTML', disable_web_page_preview=True)
 
+    def handle_client(update, context):
+        log.info(
+                "Got /client request from user [%s] %s",
+                update.message.chat['id'],
+                update.message.from_user.username)
+        try:
+          host, port = update.message.text.split(':')
+        except:
+          update.message.reply_text(
+              'Send transmission RPC address like <b>host:port</b>',
+              parse_mode='HTML',
+              disable_web_page_preview=True)
+
 
     updater = Updater(token, use_context=True)
     update_watcher(updater.bot)
 
     updater.dispatcher.add_handler(CommandHandler('list', list_alerts))
+    updater.dispatcher.add_handler(CommandHandler('client', handle_client))
     updater.dispatcher.add_handler(MessageHandler(filters.Filters.text, add))
 
     updater.start_polling()

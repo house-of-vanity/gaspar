@@ -4,6 +4,7 @@ import logging
 from datetime import datetime
 from .rutracker import Torrent
 from .tools import format_topic
+from .transmission import add_tor
 
 UPDATE_INTERVAL = 2 * 60 * 60 # in secs.
 
