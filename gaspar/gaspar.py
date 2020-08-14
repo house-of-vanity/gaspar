@@ -79,16 +79,30 @@ def main():
                 u_id,
                 update.message.from_user.username)
         try:
-          host, port = update.message.text.split(':')
-          host = host.split(' ')[1]
+          addr = update.message.text.split()[1]
+          log.info("Client Transmission RPC address - %s", addr)
+          tr = parse.urlparse(addr)
+          scheme = tr.scheme if tr.scheme else False
+          hostname = tr.hostname if tr.hostname else False
+          username = tr.username if tr.username else False
+          password = tr.password if tr.password else False
+          path = tr.path if tr.path else '/transmission/rpc'
+          port = tr.port if tr.port else (80 if scheme == 'http' else 443)
+          if not scheme or not hostname:
+            update.message.reply_text(
+                    f'Can\'t understand : <b>{update.message.text}</b>. '
+                    'Send transmission RPC address like <b>http(s)://[user:pass]host[:port][/rpc_path]</b>',
+                parse_mode='HTML',
+                disable_web_page_preview=True)
+            return
         except:
           update.message.reply_text(
-              'Send transmission RPC address like <b>host:port</b>',
+                  'Gaspar is able to add new topics to your private Transmission server.'
+                  'Send transmission RPC address like <b>http(s)://[user:pass]host[:port][/rpc_path]</b>',
               parse_mode='HTML',
               disable_web_page_preview=True)
           return
-        torrent.db.add_client(u_id, host, port)
-        log.info(torrent.db.get_client(u_id))
+        torrent.db.add_client(u_id, scheme, hostname, port, username, password, path)
 
 
     updater = Updater(token, use_context=True)

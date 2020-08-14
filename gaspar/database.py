@@ -105,13 +105,13 @@ class DataBase:
                 )  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ? )"""
         self.execute(sql, attrs)
 
-    def add_client(self, user_id, host, port):
-        sql = """INSERT OR REPLACE INTO tr_clients(user_id, host, port)
-                    VALUES(?, ?, ?);"""
-        self.execute(sql, (user_id, host, port))
+    def add_client(self, user_id, scheme, hostname, port, username, password, path):
+        sql = """INSERT OR REPLACE INTO tr_clients(user_id, scheme, hostname, port, username, password, path)
+                    VALUES(?, ?, ?, ?, ?, ?, ?);"""
+        self.execute(sql, (user_id, scheme, hostname, port, username, password, path))
 
     def get_client(self, user_id):
-        sql = "SELECT host, port FROM tr_clients WHERE user_id = ?"
+        sql = "SELECT scheme, hostname, port, username, password, path FROM tr_clients WHERE user_id = ?"
         return self.execute(sql, (user_id,))[0]
 
     def get_attr(self, tor_id, attr):

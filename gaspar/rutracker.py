@@ -23,7 +23,8 @@ class Torrent:
     def tor_id(self, tor_id):
         self.__tor_id = tor_id
         if tor_id:
-            self.get_tor_topic_data(tor_id)
+            return self.get_tor_topic_data(tor_id)
+                
 
     def get_tor_topic_data(self, tor_id):
         data = dict()
@@ -32,9 +33,13 @@ class Torrent:
                     self.api_url, tor_id)) as url:
             data = json.loads(url.read().decode())
         data = data["result"][tor_id]
-        data["id"] = tor_id
-        log.info("Getting info for [%s] %s%s", tor_id, data["topic_title"][:60], '...')
-        self.meta = data
+        try:
+            data["id"] = tor_id
+            log.info("Getting info for [%s] %s%s", tor_id, data["topic_title"][:60], '...')
+            self.meta = data
+        except TypeError:
+            log.warning("Tor_id %s fetch failed, maybe removed on server.", tor_id)
+            return False
 
     def is_outdated(self):
         if not self.tor_id:
