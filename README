@@ -1,5 +1,18 @@
-### Gaspar telegram bot
+ _______  _______  _______  _______  _______  ______   
+|       ||   _   ||       ||       ||   _   ||    _ |  
+|    ___||  |_|  ||  _____||    _  ||  |_|  ||   | ||  
+|   | __ |       || |_____ |   |_| ||       ||   |_||_ 
+|   ||  ||       ||_____  ||    ___||       ||    __  |
+|   |_| ||   _   | _____| ||   |    |   _   ||   |  | |
+|_______||__| |__||_______||___|    |__| |__||___|  |_|
 
-Telegram bot for notification about topic update on rutracker via telegram.
+Gaspar telegram bot written in python.
 
-also you can use already runned bot instance - @let_you_know_bot
+Fetures:
+ * notify about topic update on rutracker via telegram.
+ * is able to push new magnet link into your Transmission RPC client.
+
+
+running instance - @let_you_know_bot
+
+
