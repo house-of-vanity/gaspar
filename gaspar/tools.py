@@ -12,7 +12,8 @@ def format_topic(tor_id, topic_title, size, info_hash, reg_time, pre=''):
     reg_time = datetime.utcfromtimestamp(int(reg_time)
             ).strftime('%b-%d-%Y')
     msg = f"""{pre}<a href='https://rutracker.org/forum/viewtopic.php?t={tor_id}'><b>{topic_title}</b></a>
-<b>💿 Size:</b>           <code>{size}</code>
-<b>#️⃣ Hash:</b>         <code>{info_hash}</code>
-<b>📅 Updated:</b>   <code>{reg_time}</code>\n"""
+<b>💿 Size:</b>                    <code>{size}</code>
+<b>#️⃣ Hash:</b>                 <code>{info_hash}</code>
+<b>📅 Updated:</b>          <code>{reg_time}</code>
+<b>❌ Unsubscribe:  /delete_{tor_id}</b>\n"""
     return msg

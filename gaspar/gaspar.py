@@ -3,7 +3,7 @@ import sys
 import logging
 from urllib import parse
 from telegram import *
-from telegram.ext import Updater, MessageHandler, CommandHandler, filters
+from telegram.ext import Updater, MessageHandler, CommandHandler, PrefixHandler, filters
 from .rutracker import Torrent
 from .notify import update_watcher
 from .database import DataBase
@@ -14,21 +14,20 @@ logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 log = logging.getLogger(__name__)
 
-torrent = Torrent()
+
+token = os.environ.get('TG_TOKEN')
+if not token:
+    log.error("Env var TG_TOKEN isn't set.")
+    sys.exit(1)
 
 def main():
-    token = os.environ.get('TG_TOKEN')
-    if not token:
-        log.error("Env var TG_TOKEN isn't set.")
-        sys.exit(1)
     """Run bot."""
-
     def add(update, context):
         if 'https://rutracker.org' in update.message.text:
             try:
                 tor_id = parse.parse_qs(parse.urlsplit(update.message.text).query)['t'][0]
             except KeyError:
-                log.warn("URL provided doesn't contains any torrent id.")
+                log.warning("URL provided doesn't contains any torrent id.")
                 update.message.reply_text("URL provided doesn't contains any torrent id.")
                 return
         else:
@@ -57,7 +56,7 @@ def main():
                 "Got /list request from user [%s] %s",
                 update.message.chat['id'],
                 update.message.from_user.username)
-        alerts = torrent.db.get_alerts(update.message.chat['id'])
+        alerts = Torrent().db.get_alerts(update.message.chat['id'])
         if len(alerts) == 0:
             update.message.reply_text("You have no configured alerts.")
             return True
@@ -102,14 +101,27 @@ def main():
               parse_mode='HTML',
               disable_web_page_preview=True)
           return
-        torrent.db.add_client(u_id, scheme, hostname, port, username, password, path)
 
+        Torrent().db.add_client(u_id, scheme, hostname, port, username, password, path)
+
+    def delete(update, context):
+        log.info(
+            "Got /delete request from user [%s] %s",
+            update.message.chat['id'],
+            update.message.from_user.username)
+        tor_id = update.message.text.split('_')[1]
+        try:
+            Torrent().db.delete_tor(update.message.chat['id'], tor_id)
+            context.bot.sendMessage(update.message.chat['id'], f'Deleted {tor_id}')
+        except:
+            context.bot.sendMessage(update.message.chat['id'], f'Faled to delete {tor_id}')
 
     updater = Updater(token, use_context=True)
     update_watcher(updater.bot)
 
     updater.dispatcher.add_handler(CommandHandler('list', list_alerts))
     updater.dispatcher.add_handler(CommandHandler('client', handle_client))
+    updater.dispatcher.add_handler(MessageHandler(filters.Filters.regex(r'/delete_'), delete))
     updater.dispatcher.add_handler(MessageHandler(filters.Filters.text, add))
 
     updater.start_polling()
@@ -117,4 +129,5 @@ def main():
 
 
 if __name__ == '__main__':
+    log = logging.getLogger('gaspar')
     main()

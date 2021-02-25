@@ -19,7 +19,7 @@ class DBInitException(Exception):
 class DataBase:
     """This class create or use existent SQLite database file. It provides 
     high-level methods for database."""
-    def __init__(self, scheme, basefile='/usr/share/gaspar/data.sqlite'):
+    def __init__(self):
         """
           Constructor creates new SQLite database if 
           it doesn't exist. Uses SQL code from file for DB init.
@@ -27,15 +27,15 @@ class DataBase:
           :type scheme: string
           :return: None
         """
-        self.scheme = ''
-        self.basefile = basefile
+        self.scheme = os.environ.get('TG_SCHEME') if os.environ.get('TG_SCHEME') else '/usr/share/gaspar/scheme.sql'
+        self.basefile = os.environ.get('TG_DB') if os.environ.get('TG_DB') else '/usr/share/gaspar/data.sqlite'
         try:
-            conn = self.connect(basefile=basefile)
-            log.info("Using '%s' base file.", os.path.realpath(basefile))
+            conn = self.connect()
+            log.info("Using '%s' base file.", os.path.realpath(self.basefile))
         except:
             log.debug('Could not connect to DataBase.')
             return None
-        with open(scheme, 'r') as scheme_sql:
+        with open(self.scheme, 'r') as scheme_sql:
             sql = scheme_sql.read()
             self.scheme = sql
             if conn is not None:
@@ -51,15 +51,15 @@ class DataBase:
         log.info('DB connected.')
         self.close(conn)
 
-    def connect(self, basefile):
+    def connect(self):
         """
           Create connect object for basefile
           :param basefile: SQLite database filename
           :type basefile: string
           :return: sqlite3 connect object
         """
-        #log.debug("Open connection to %s", basefile)
-        return sqlite3.connect(basefile, check_same_thread=False)
+        log.info("Open connection to %s", os.path.realpath(self.basefile))
+        return sqlite3.connect(self.basefile, check_same_thread=False)
 
     def execute(self, sql, params):
         """
@@ -69,7 +69,7 @@ class DataBase:
           :type sql: string
           :return: list of response. Empty list when no rows are available.
         """
-        conn = self.connect(basefile=self.basefile)
+        conn = self.connect()
         log.debug("Executing: %s %s", sql, params)
         cursor = conn.cursor()
         cursor.execute(sql, params)
@@ -170,6 +170,11 @@ class DataBase:
                         tor_data["topic_title"],
                         tor_data["seeder_last_seen"],
                     ))
+
+    def delete_tor(self, user_id, tor_id):
+        sql = "DELETE FROM alerts WHERE user_id = ? AND tor_id = ?"
+        self.execute(sql, (user_id, tor_id))
+
     def save_user(self, chat_instance):
         sql = """INSERT OR IGNORE INTO users(
                 'id',
@@ -196,14 +201,14 @@ class DataBase:
     def get_alerts(self, user_id=None):
         if user_id:
             sql = """SELECT t.size, t.reg_time, t.topic_title, t.id, t.info_hash FROM 
-                    torrents t LEFT JOIN alerts a ON a.tor_id = t.id
+                    torrents t JOIN alerts a ON a.tor_id = t.id
                     WHERE a.user_id = ?"""
             raw = self.execute(sql, (
                         user_id,
                         ))
         else:
             sql = """SELECT t.size, t.reg_time, t.topic_title, t.id, t.info_hash FROM 
-                    torrents t LEFT JOIN alerts a ON a.tor_id = t.id GROUP BY t.id"""
+                    torrents t JOIN alerts a ON a.tor_id = t.id GROUP BY t.id"""
             raw = self.execute(sql, ())
         alerts = list()
         for alert in raw:

@@ -51,15 +51,17 @@ def update_watcher(bot):
                             pre='<i>Topic has been updated</i>\n')
                     subs = torrent.db.get_subscribers(alert['id'])
                     for sub in subs:
-                        bot.sendMessage(sub, msg, parse_mode='HTML', disable_web_page_preview=True)
                         try:
                           scheme, hostname, port, username, password, path = torrent.db.get_client(sub)
                           if add_tor(scheme, hostname, port, username, password, path, torrent.meta['info_hash']):
                               log.info("Push update to client Transmission RPC for %s", torrent.meta['info_hash'])
+                              msg = f"{msg}\n* Added to your Transmission: {scheme}://{hostname}:{port}/{path}"
                           else:
                               log.warning("Failed push update to client Transmission RPC for %s", torrent.meta['info_hash'])
                         except:
                           pass
+                        bot.sendMessage(sub, msg, parse_mode='HTML', disable_web_page_preview=True)
+
                     time.sleep(1)
                 else:
                     log.info("There is no update for %s", alert['topic_title'])
