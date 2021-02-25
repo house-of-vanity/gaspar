@@ -16,7 +16,7 @@ def get_requires(rfile):
 
 setup(
     name = "gaspar",
-    version = "0.0.3",
+    version = "0.0.4",
     author = "UltraDesu",
     author_email = "ultradesu@hexor.ru",
     description = ("Telegram bot. Keep an eye on rutracker.org topics and let you "
