@@ -14,6 +14,10 @@ Fetures:
 
 
 running instance - @let_you_know_bot
+Install your own:
+    $ python3 setup.py install
+    $ TG_TOKEN=xxx gaspar
+
 
 ⣿⣿⣿⡷⠊⡢⡹⣦⡑⢂⢕⢂⢕⢂⢕⢂⠕⠔⠌⠝⠛⠶⠶⢶⣦⣄⢂⢕⢂⢕
 ⣿⣿⠏⣠⣾⣦⡐⢌⢿⣷⣦⣅⡑⠕⠡⠐⢿⠿⣛⠟⠛⠛⠛⠛⠡⢷⡈⢂⢕⢂
