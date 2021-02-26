@@ -8,7 +8,7 @@
 
 Gaspar telegram bot written in python.
 
-Fetures:
+Features:
  * Notify about topic update on rutracker.org via Telegram.
  * Can push new magnet link into your Transmission web client.
 
