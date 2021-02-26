@@ -4,11 +4,14 @@
 .. moduleauthor:: AB <github.com/house-of-vanity>
 """
 
-import sqlite3
 import logging
 import os
+import sqlite3
+
+from .transmission import check_connection
 
 log = logging.getLogger(__name__)
+
 
 class DBInitException(Exception):
     """ Exception at DB Init """
@@ -19,6 +22,7 @@ class DBInitException(Exception):
 class DataBase:
     """This class create or use existent SQLite database file. It provides 
     high-level methods for database."""
+
     def __init__(self):
         """
           Constructor creates new SQLite database if 
@@ -85,7 +89,7 @@ class DataBase:
           :type conn: object
           :return: None
         """
-        #log.debug("Close connection to %s", self.basefile)
+        # log.debug("Close connection to %s", self.basefile)
         conn.close()
 
     def copy_to_history(self, tor_id):
@@ -106,13 +110,25 @@ class DataBase:
         self.execute(sql, attrs)
 
     def add_client(self, user_id, scheme, hostname, port, username, password, path):
-        sql = """INSERT OR REPLACE INTO tr_clients(user_id, scheme, hostname, port, username, password, path)
-                    VALUES(?, ?, ?, ?, ?, ?, ?);"""
-        self.execute(sql, (user_id, scheme, hostname, port, username, password, path))
+        if check_connection(scheme, hostname, port, username, password, path):
+            sql = """INSERT OR REPLACE INTO tr_clients(user_id, scheme, hostname, port, username, password, path)
+                        VALUES(?, ?, ?, ?, ?, ?, ?);"""
+            self.execute(sql, (user_id, scheme, hostname, port, username, password, path))
+            return True
+        else:
+            return False
 
     def get_client(self, user_id):
         sql = "SELECT scheme, hostname, port, username, password, path FROM tr_clients WHERE user_id = ?"
-        return self.execute(sql, (user_id,))[0]
+        res = self.execute(sql, (user_id,))
+        if len(res):
+            return self.execute(sql, (user_id,))[0]
+        else:
+            return False
+
+    def drop_client(self, user_id):
+        sql = "DELETE FROM tr_clients WHERE user_id = ?"
+        self.execute(sql, (user_id,))
 
     def get_attr(self, tor_id, attr):
         sql = """SELECT %s FROM torrents WHERE id = ? ORDER BY reg_time DESC LIMIT 1""" % attr
@@ -133,17 +149,17 @@ class DataBase:
                 WHERE id = ?
         """
         self.execute(sql, (
-                        tor_data["info_hash"],
-                        tor_data["forum_id"],
-                        tor_data["poster_id"],
-                        int(tor_data["size"]),
-                        int(tor_data["reg_time"]),
-                        tor_data["tor_status"],
-                        tor_data["seeders"],
-                        tor_data["topic_title"],
-                        tor_data["seeder_last_seen"],
-                        tor_data["id"],
-                    ))
+            tor_data["info_hash"],
+            tor_data["forum_id"],
+            tor_data["poster_id"],
+            int(tor_data["size"]),
+            int(tor_data["reg_time"]),
+            tor_data["tor_status"],
+            tor_data["seeders"],
+            tor_data["topic_title"],
+            tor_data["seeder_last_seen"],
+            tor_data["id"],
+        ))
 
     def save_tor(self, tor_data):
         sql = """INSERT OR IGNORE INTO torrents(
@@ -159,17 +175,17 @@ class DataBase:
                     'seeder_last_seen'
                 )  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"""
         self.execute(sql, (
-                        tor_data["id"],
-                        tor_data["info_hash"],
-                        tor_data["forum_id"],
-                        tor_data["poster_id"],
-                        int(tor_data["size"]),
-                        int(tor_data["reg_time"]),
-                        tor_data["tor_status"],
-                        tor_data["seeders"],
-                        tor_data["topic_title"],
-                        tor_data["seeder_last_seen"],
-                    ))
+            tor_data["id"],
+            tor_data["info_hash"],
+            tor_data["forum_id"],
+            tor_data["poster_id"],
+            int(tor_data["size"]),
+            int(tor_data["reg_time"]),
+            tor_data["tor_status"],
+            tor_data["seeders"],
+            tor_data["topic_title"],
+            tor_data["seeder_last_seen"],
+        ))
 
     def delete_tor(self, user_id, tor_id):
         sql = "DELETE FROM alerts WHERE user_id = ? AND tor_id = ?"
@@ -183,20 +199,21 @@ class DataBase:
                 'last_name'
                 ) VALUES (?, ?, ?, ?)"""
         self.execute(sql, (
-                    chat_instance['id'],
-                    chat_instance['username'],
-                    chat_instance['first_name'],
-                    chat_instance['last_name'],
-                    ))
+            chat_instance['id'],
+            chat_instance['username'],
+            chat_instance['first_name'],
+            chat_instance['last_name'],
+        ))
+
     def save_alert(self, user_id, tor_id):
         sql = """INSERT OR IGNORE INTO alerts(
                 'user_id',
                 'tor_id'
                 ) VALUES (?, ?)"""
         self.execute(sql, (
-                    user_id,
-                    tor_id
-                    ))
+            user_id,
+            tor_id
+        ))
 
     def get_alerts(self, user_id=None):
         if user_id:
@@ -204,8 +221,8 @@ class DataBase:
                     torrents t JOIN alerts a ON a.tor_id = t.id
                     WHERE a.user_id = ?"""
             raw = self.execute(sql, (
-                        user_id,
-                        ))
+                user_id,
+            ))
         else:
             sql = """SELECT t.size, t.reg_time, t.topic_title, t.id, t.info_hash FROM 
                     torrents t JOIN alerts a ON a.tor_id = t.id GROUP BY t.id"""
@@ -227,6 +244,3 @@ class DataBase:
         for sub in self.execute(sql, (tor_id,)):
             subs.append(sub[0])
         return subs
-    
-
-

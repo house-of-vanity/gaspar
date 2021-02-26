@@ -1,5 +1,4 @@
 import json
-import os
 import logging
 import re
 import urllib.request
@@ -7,6 +6,7 @@ import urllib.request
 from .database import DataBase
 
 log = logging.getLogger(__name__)
+
 
 class Torrent:
     def __init__(self, tor_id=None):
@@ -27,7 +27,6 @@ class Torrent:
         self.__tor_id = tor_id
         if tor_id:
             return self.get_tor_topic_data(tor_id)
-                
 
     def get_tor_topic_data(self, tor_id):
         data = dict()
@@ -62,6 +61,6 @@ class Torrent:
         if not self.tor_id:
             log.warn("Torrent id not presented.")
             return False
-        ep_str = re.search(r"\[\d+(\+\d+)?(-\d+)?( +)?(из)?( +)?\d+(\+\d+)?(-\d+)?\]", self.meta["topic_title"]).group(0)
+        ep_str = re.search(r"\[\d+(\+\d+)?(-\d+)?( +)?(из)?( +)?\d+(\+\d+)?(-\d+)?\]", self.meta["topic_title"]).group(
+            0)
         return ep_str
-
