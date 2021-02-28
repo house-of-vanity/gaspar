@@ -15,6 +15,7 @@ Features:
 
 running instance - @let_you_know_bot
 Install your own:
+    $ pip3 install -r requirements.txt
     $ python3 setup.py install
     $ TG_TOKEN=xxx gaspar
 
