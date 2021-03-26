@@ -147,7 +147,7 @@ def main():
 
     def button(update: Update, context: CallbackContext) -> None:
         query = update.callback_query
-        query.answer()
+
 
         torrent_id = query.data.split('.')[1]
         torrent = Torrent(torrent_id)
@@ -160,10 +160,12 @@ def main():
             torrent.meta['reg_time'],
             pre='You will be alerted about\n')
         if query.data.split('.')[0] == "close":
+            query.answer()
             query.edit_message_text(text=f"{msg}", parse_mode='HTML',
                                     disable_web_page_preview=True)
         else:
             easy_send(client_id=query.from_user, torent=torrent)
+            query.answer()
             query.edit_message_text(text=f"{msg}📨 <b>Sent to RPC client</b>", parse_mode='HTML',
                                     disable_web_page_preview=True)
 
