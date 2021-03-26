@@ -1,5 +1,6 @@
 import os, subprocess
 from setuptools import setup
+from gaspar import __version__ as version
 
 def read(fname):
     return open(os.path.join(os.path.dirname(__file__), fname)).read()
@@ -16,7 +17,7 @@ def get_requires(rfile):
 
 setup(
     name = "gaspar",
-    version = "0.0.5",
+    version = version,
     author = "UltraDesu",
     author_email = "ultradesu@hexor.ru",
     description = ("Telegram bot. Keep an eye on rutracker.org topics and let you "

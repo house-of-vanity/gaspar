@@ -3,11 +3,13 @@ import os
 import sys
 from urllib import parse
 
-from telegram.ext import Updater, MessageHandler, CommandHandler, filters
+from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
+from telegram.ext import Updater, MessageHandler, CommandHandler, filters, CallbackQueryHandler, CallbackContext
 
 from .notify import update_watcher
 from .rutracker import Torrent
 from .tools import format_topic
+from .transmission import easy_send
 
 logging.basicConfig(
     level=logging.INFO,
@@ -49,7 +51,16 @@ def main():
             torrent.meta['info_hash'],
             torrent.meta['reg_time'],
             pre='You will be alerted about\n')
-        update.message.reply_text(msg, parse_mode='HTML', disable_web_page_preview=True)
+        keyboard = []
+        if torrent.db.get_client_rpc(update.message.chat['id']):
+            keyboard.append([
+                InlineKeyboardButton("Add torrent to RPC client", callback_data=f"start_rpc.{torrent.meta['id']}"),
+                InlineKeyboardButton("Don't!", callback_data=f"close.{torrent.meta['id']}"), ],
+            )
+
+        reply_markup = InlineKeyboardMarkup(keyboard)
+
+        update.message.reply_text(msg, parse_mode='HTML', disable_web_page_preview=True, reply_markup=reply_markup)
 
     def list_alerts(update, context):
         log.info(
@@ -95,8 +106,7 @@ def main():
                     disable_web_page_preview=True)
                 return
         except:
-            tr_client = Torrent().db.get_client(u_id)
-            log.info(tr_client)
+            tr_client = Torrent().db.get_client_rpc(u_id)
             if tr_client:
                 tr_line = f"Your client: <code>{tr_client[0]}://{tr_client[1]}:{tr_client[2]}{tr_client[5]}</code>\n" \
                           r"/delete_client"
@@ -110,7 +120,7 @@ def main():
                 disable_web_page_preview=True)
             return
 
-        if Torrent().db.add_client(u_id, scheme, hostname, port, username, password, path):
+        if Torrent().db.add_client_rpc(u_id, scheme, hostname, port, username, password, path):
             update.message.reply_text(f'Client reachable and saved.')
         else:
             update.message.reply_text(f'Client unreachable.')
@@ -120,7 +130,7 @@ def main():
             "Got /delete request from user [%s] %s",
             update.message.chat['id'],
             update.message.from_user.username)
-        Torrent().db.drop_client(update.message.chat['id'])
+        Torrent().db.drop_client_rpc(update.message.chat['id'])
         update.message.reply_text(f'Client deleted.')
 
     def delete(update, context):
@@ -135,6 +145,28 @@ def main():
         except:
             update.message.reply_text(f'Faled to delete {tor_id}')
 
+    def button(update: Update, context: CallbackContext) -> None:
+        query = update.callback_query
+        query.answer()
+
+        torrent_id = query.data.split('.')[1]
+        torrent = Torrent(torrent_id)
+
+        msg = format_topic(
+            torrent.meta['id'],
+            torrent.meta['topic_title'],
+            torrent.meta['size'],
+            torrent.meta['info_hash'],
+            torrent.meta['reg_time'],
+            pre='You will be alerted about\n')
+        if query.data.split('.')[0] == "close":
+            query.edit_message_text(text=f"{msg}", parse_mode='HTML',
+                                    disable_web_page_preview=True)
+        else:
+            easy_send(client_id=query.from_user, torent=torrent)
+            query.edit_message_text(text=f"{msg}📨 <b>Sent to RPC client</b>", parse_mode='HTML',
+                                    disable_web_page_preview=True)
+
     updater = Updater(token, use_context=True)
     update_watcher(updater.bot)
 
@@ -143,6 +175,7 @@ def main():
     updater.dispatcher.add_handler(CommandHandler('delete_client', delete_client))
     updater.dispatcher.add_handler(MessageHandler(filters.Filters.regex(r'/delete_'), delete))
     updater.dispatcher.add_handler(MessageHandler(filters.Filters.text, add))
+    updater.dispatcher.add_handler(CallbackQueryHandler(button))
 
     updater.start_polling()
     updater.idle()

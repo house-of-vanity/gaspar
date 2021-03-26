@@ -35,7 +35,7 @@ class DataBase:
         self.basefile = os.environ.get('TG_DB') if os.environ.get('TG_DB') else '/usr/share/gaspar/data.sqlite'
         try:
             conn = self.connect()
-            log.info("Using '%s' base file.", os.path.realpath(self.basefile))
+            log.debig("Using '%s' base file.", os.path.realpath(self.basefile))
         except:
             log.debug('Could not connect to DataBase.')
             return None
@@ -52,7 +52,7 @@ class DataBase:
             else:
                 log.debug("Error! cannot create the database connection.")
                 raise DBInitException
-        log.info('DB connected.')
+        log.debug('DB connected.')
         self.close(conn)
 
     def connect(self):
@@ -62,7 +62,7 @@ class DataBase:
           :type basefile: string
           :return: sqlite3 connect object
         """
-        log.info("Open connection to %s", os.path.realpath(self.basefile))
+        log.debug("Open connection to %s", os.path.realpath(self.basefile))
         return sqlite3.connect(self.basefile, check_same_thread=False)
 
     def execute(self, sql, params):
@@ -78,7 +78,8 @@ class DataBase:
         cursor = conn.cursor()
         cursor.execute(sql, params)
         conn.commit()
-        result = cursor.fetchall()
+        _result = cursor.fetchall()
+        result = _result if _result else cursor.lastrowid
         self.close(conn)
         return result
 
@@ -109,7 +110,7 @@ class DataBase:
                 )  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ? )"""
         self.execute(sql, attrs)
 
-    def add_client(self, user_id, scheme, hostname, port, username, password, path):
+    def add_client_rpc(self, user_id, scheme, hostname, port, username, password, path):
         if check_connection(scheme, hostname, port, username, password, path):
             sql = """INSERT OR REPLACE INTO tr_clients(user_id, scheme, hostname, port, username, password, path)
                         VALUES(?, ?, ?, ?, ?, ?, ?);"""
@@ -118,7 +119,7 @@ class DataBase:
         else:
             return False
 
-    def get_client(self, user_id):
+    def get_client_rpc(self, user_id):
         sql = "SELECT scheme, hostname, port, username, password, path FROM tr_clients WHERE user_id = ?"
         res = self.execute(sql, (user_id,))
         if len(res):
@@ -126,7 +127,7 @@ class DataBase:
         else:
             return False
 
-    def drop_client(self, user_id):
+    def drop_client_rpc(self, user_id):
         sql = "DELETE FROM tr_clients WHERE user_id = ?"
         self.execute(sql, (user_id,))
 
@@ -174,7 +175,7 @@ class DataBase:
                     'topic_title', 
                     'seeder_last_seen'
                 )  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"""
-        self.execute(sql, (
+        row_id = self.execute(sql, (
             tor_data["id"],
             tor_data["info_hash"],
             tor_data["forum_id"],
@@ -186,6 +187,7 @@ class DataBase:
             tor_data["topic_title"],
             tor_data["seeder_last_seen"],
         ))
+        return row_id
 
     def delete_tor(self, user_id, tor_id):
         sql = "DELETE FROM alerts WHERE user_id = ? AND tor_id = ?"

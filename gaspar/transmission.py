@@ -1,7 +1,19 @@
 from transmission_rpc import Client
+import logging
+
+log = logging.getLogger(__name__)
+
+def easy_send(torent, client_id):
+    try:
+        scheme, hostname, port, username, password, path = torent.db.get_client_rpc(client_id['id'])
+        if send_to_client_rpc(scheme, hostname, port, username, password, path, torent.meta['info_hash']):
+            log.info("Push update to client Transmission RPC for %s", torent.meta['topic_title'])
+    except Exception as e:
+        log.warning("Failed push update to client Transmission RPC for %s: %s",
+                    torent.meta['topic_title'], e)
 
 
-def add_tor(scheme, hostname, port, username, password, path, tor_hash):
+def send_to_client_rpc(scheme, hostname, port, username, password, path, tor_hash):
     try:
         c = Client(
             host=hostname,
