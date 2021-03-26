@@ -1,2 +1,2 @@
-python-telegram-bot==12.7
+python-telegram-bot==13.4
 transmission-rpc==2.0.4

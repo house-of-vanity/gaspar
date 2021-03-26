@@ -54,7 +54,7 @@ def main():
         keyboard = []
         if torrent.db.get_client_rpc(update.message.chat['id']):
             keyboard.append([
-                InlineKeyboardButton("Add torrent to RPC client", callback_data=f"start_rpc.{torrent.meta['id']}"),
+                InlineKeyboardButton("Add torrent to RPC client?", callback_data=f"start_rpc.{torrent.meta['id']}"),
                 InlineKeyboardButton("Don't!", callback_data=f"close.{torrent.meta['id']}"), ],
             )
 
