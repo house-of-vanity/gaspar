@@ -60,7 +60,7 @@ def update_watcher(bot):
                             scheme, hostname, port, username, password, path = torrent.db.get_client_rpc(sub)
                             if send_to_client_rpc(scheme, hostname, port, username, password, path, torrent.meta['info_hash']):
                                 log.info("Push update to client Transmission RPC for %s", torrent.meta['info_hash'])
-                                msg = f"{msg}\n* Added to your Transmission: {scheme}://{hostname}:{port}/{path}"
+                                msg = f"{msg}📨 <b>Sent to RPC /client</b>"
                             else:
                                 log.warning("Failed push update to client Transmission RPC for %s",
                                             torrent.meta['info_hash'])

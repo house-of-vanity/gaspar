@@ -166,7 +166,7 @@ def main():
         else:
             easy_send(client_id=query.from_user, torent=torrent)
             query.answer()
-            query.edit_message_text(text=f"{msg}📨 <b>Sent to RPC client</b>", parse_mode='HTML',
+            query.edit_message_text(text=f"{msg}📨 <b>Sent to RPC /client</b>", parse_mode='HTML',
                                     disable_web_page_preview=True)
 
     updater = Updater(token, use_context=True)
