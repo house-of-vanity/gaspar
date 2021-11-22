@@ -33,9 +33,10 @@ class DataBase:
         """
         self.scheme = os.environ.get('TG_SCHEME') if os.environ.get('TG_SCHEME') else '/usr/share/gaspar/scheme.sql'
         self.basefile = os.environ.get('TG_DB') if os.environ.get('TG_DB') else '/usr/share/gaspar/data.sqlite'
+        log.debug("self.scheme: %s, self.basefile: %s", self.scheme, self.basefile)
         try:
             conn = self.connect()
-            log.debig("Using '%s' base file.", os.path.realpath(self.basefile))
+            log.debug("Using '%s' base file.", os.path.realpath(self.basefile))
         except:
             log.debug('Could not connect to DataBase.')
             return None
@@ -111,18 +112,17 @@ class DataBase:
         self.execute(sql, attrs)
 
     def add_client_rpc(self, user_id, scheme, hostname, port, username, password, path):
-        if check_connection(scheme, hostname, port, username, password, path):
-            sql = """INSERT OR REPLACE INTO tr_clients(user_id, scheme, hostname, port, username, password, path)
-                        VALUES(?, ?, ?, ?, ?, ?, ?);"""
-            self.execute(sql, (user_id, scheme, hostname, port, username, password, path))
-            return True
-        else:
-            return False
+        sql = """INSERT OR REPLACE INTO tr_clients(user_id, scheme, hostname, port, username, password, path)
+                    VALUES(?, ?, ?, ?, ?, ?, ?);"""
+        log.info("%s", (user_id, scheme, hostname, port, username, password, path))
+        x = self.execute(sql, (user_id, scheme, hostname, port, username, password, path))
+        log.info("add_client_rpc: %s", x)
+        return True
 
     def get_client_rpc(self, user_id):
         sql = "SELECT scheme, hostname, port, username, password, path FROM tr_clients WHERE user_id = ?"
         res = self.execute(sql, (user_id,))
-        if len(res):
+        if res:
             return self.execute(sql, (user_id,))[0]
         else:
             return False
@@ -230,14 +230,15 @@ class DataBase:
                     torrents t JOIN alerts a ON a.tor_id = t.id GROUP BY t.id"""
             raw = self.execute(sql, ())
         alerts = list()
-        for alert in raw:
-            tmp = dict()
-            tmp['id'] = alert[3]
-            tmp['reg_time'] = alert[1]
-            tmp['topic_title'] = alert[2]
-            tmp['size'] = alert[0]
-            tmp['info_hash'] = alert[4]
-            alerts.append(tmp)
+        if not isinstance(raw, int):
+            for alert in raw:
+                tmp = dict()
+                tmp['id'] = alert[3]
+                tmp['reg_time'] = alert[1]
+                tmp['topic_title'] = alert[2]
+                tmp['size'] = alert[0]
+                tmp['info_hash'] = alert[4]
+                alerts.append(tmp)
         return alerts
 
     def get_subscribers(self, tor_id):

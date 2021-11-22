@@ -37,13 +37,13 @@ CREATE TABLE IF NOT EXISTS "alerts" (
         UNIQUE(user_id, tor_id)
         );
 CREATE TABLE IF NOT EXISTS "tr_clients" (
-        user_id TEXT,
-        scheme TEXT,
-        hostname TEXT,
-        port TEXT,
-	username TEXT,
-	password TEXT,
-	path TEXT,
+    user_id TEXT,
+    scheme TEXT,
+    hostname TEXT,
+    port INTEGER,
+    username TEXT DEFAULT NULL,
+    password TEXT DEFAULT NULL,
+    path TEXT,
         UNIQUE(user_id)
         );
 COMMIT;

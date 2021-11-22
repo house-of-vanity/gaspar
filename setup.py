@@ -28,7 +28,7 @@ setup(
     packages=['gaspar'],
     long_description=read('README'),
     classifiers=[
-        "Development Status :: 3 - Alpha",
+        "Development Status :: 3 - Beta",
         "Topic :: Utilities",
     ],
     entry_points={

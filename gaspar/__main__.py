@@ -6,10 +6,10 @@ from urllib import parse
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
 from telegram.ext import Updater, MessageHandler, CommandHandler, filters, CallbackQueryHandler, CallbackContext
 
+from .torrent_clients import add_client, detect_client, easy_send
 from .notify import update_watcher
 from .rutracker import Torrent
 from .tools import format_topic
-from .transmission import easy_send
 
 logging.basicConfig(
     level=logging.INFO,
@@ -88,42 +88,28 @@ def main():
             "Got /client request from user [%s] %s",
             u_id,
             update.message.from_user.username)
-        try:
-            addr = update.message.text.split()[1]
-            log.info("Client Transmission RPC address - %s", addr)
-            tr = parse.urlparse(addr)
-            scheme = tr.scheme if tr.scheme else False
-            hostname = tr.hostname if tr.hostname else False
-            username = tr.username if tr.username else False
-            password = tr.password if tr.password else False
-            path = tr.path if tr.path else '/transmission/rpc'
-            port = tr.port if tr.port else (80 if scheme == 'http' else 443)
-            if not scheme or not hostname:
-                update.message.reply_text(
-                    f'Can\'t understand : <b>{update.message.text}</b>. '
-                    'Send transmission RPC address like <b>http(s)://[user:pass]host[:port][/transmission/rpc]</b>',
-                    parse_mode='HTML',
-                    disable_web_page_preview=True)
-                return
-        except:
+        if len(update.message.text.split()) > 1:
+            msg = add_client(update.message.text.split()[1], u_id)
+            update.message.reply_text(msg)
+        else:
             tr_client = Torrent().db.get_client_rpc(u_id)
-            if tr_client:
-                tr_line = f"Your client: <code>{tr_client[0]}://{tr_client[1]}:{tr_client[2]}{tr_client[5]}</code>\n" \
+            log.info("tr_client: %s", tr_client)
+            try:
+                user_pass = f"{tr_client[3]}:{tr_client[4]}@" if tr_client[3] and tr_client[4] else ""
+                tr_client_check = detect_client(f"{tr_client[0]}://{user_pass}{tr_client[1]}:{tr_client[2]}{tr_client[5] if tr_client[5] != None else ''}")
+            except:
+                tr_client_check = False
+            if tr_client and tr_client_check:
+                tr_line = f"Your have configured client.\nURL: <code>{tr_client[0]}://{tr_client[1]}:{tr_client[2]}{tr_client[5] if tr_client[5] != None else ''}</code>\n" \
+                          f"Client: <code>{tr_client_check}</code>\nStatus: <code>Works</code>\n" \
+                          r"/delete_client"
+            elif tr_client:
+                tr_line = f"Your have configured client.\nURL: <code>{tr_client[0]}://{tr_client[1]}:{tr_client[2]}{tr_client[5] if tr_client[5] != None else ''}</code>\n" \
+                          f"Client: <code>{tr_client_check}</code>\nStatus: <code>Conenction failed!</code>\n" \
                           r"/delete_client"
             else:
-                tr_line = False
-            update.message.reply_text(
-                'Gaspar can add new topics to your private Transmission server. '
-                'Send transmission RPC address like \n<b>http(s)://[user:pass]host[:port][/transmission/rpc]</b>\n'
-                f'{tr_line if tr_line else "You have no configured client."}',
-                parse_mode='HTML',
-                disable_web_page_preview=True)
-            return
-
-        if Torrent().db.add_client_rpc(u_id, scheme, hostname, port, username, password, path):
-            update.message.reply_text(f'Client reachable and saved.')
-        else:
-            update.message.reply_text(f'Client unreachable.')
+                tr_line = "You have no configured client."
+            update.message.reply_text(tr_line, parse_mode='HTML', disable_web_page_preview=True)
 
     def delete_client(update, context):
         log.info(
@@ -147,7 +133,7 @@ def main():
 
     def button(update: Update, context: CallbackContext) -> None:
         query = update.callback_query
-
+        u_id = query.message.chat['id']
 
         torrent_id = query.data.split('.')[1]
         torrent = Torrent(torrent_id)
@@ -164,7 +150,7 @@ def main():
             query.edit_message_text(text=f"{msg}", parse_mode='HTML',
                                     disable_web_page_preview=True)
         else:
-            easy_send(client_id=query.from_user, torent=torrent)
+            easy_send(user_id=u_id, torrent_hash=torrent.meta['info_hash'])
             query.answer()
             query.edit_message_text(text=f"{msg}📨 <b>Sent to RPC /client</b>", parse_mode='HTML',
                                     disable_web_page_preview=True)

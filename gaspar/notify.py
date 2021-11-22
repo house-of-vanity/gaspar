@@ -5,7 +5,7 @@ from datetime import datetime
 
 from .rutracker import Torrent
 from .tools import format_topic
-from .transmission import send_to_client_rpc
+from .torrent_clients import easy_send
 
 UPDATE_INTERVAL = 2 * 60 * 60  # in secs.
 
@@ -58,8 +58,8 @@ def update_watcher(bot):
                     for sub in subs:
                         try:
                             scheme, hostname, port, username, password, path = torrent.db.get_client_rpc(sub)
-                            if send_to_client_rpc(scheme, hostname, port, username, password, path, torrent.meta['info_hash']):
-                                log.info("Push update to client Transmission RPC for %s", torrent.meta['info_hash'])
+                            if easy_send(torrent.meta['info_hash'], sub):
+                                log.info("Push update to client %s", torrent.meta['info_hash'])
                                 msg = f"{msg}📨 <b>Sent to RPC /client</b>"
                             else:
                                 log.warning("Failed push update to client Transmission RPC for %s",
