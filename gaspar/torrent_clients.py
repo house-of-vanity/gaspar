@@ -48,7 +48,7 @@ def _parse_address(address):
 def detect_client(address):
     client = False
     tr = _parse_address(address)
-    # Check for qBittorrent v4.1.0+
+    # Check for qBittorrent v4.3.8+
     try:
         qbt_client = qbt.Client(
                 host=f"{tr['scheme']}://{tr['hostname']}",

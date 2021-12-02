@@ -10,7 +10,7 @@ Gaspar telegram bot written in python.
 
 Features:
  * Notify about topic update on rutracker.org via Telegram.
- * Can push new magnet link into your Transmission or qBittorrent web client.
+ * Can push new magnet link into your Transmission or qBittorrent v4.3.8+ web client.
 
 
 running instance - @let_you_know_bot
