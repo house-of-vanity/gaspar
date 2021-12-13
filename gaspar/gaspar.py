@@ -63,24 +63,67 @@ def main():
         update.message.reply_text(msg, parse_mode='HTML', disable_web_page_preview=True, reply_markup=reply_markup)
 
     def list_alerts(update, context):
+        per_page = 5
+#       log.info("list_alerts update.callback_query: %s", update.callback_query.message)
+        try:
+            query = int(update.callback_query.data.split('.')[-1])
+            chat_id = update.callback_query.message.chat['id']
+            username = update.callback_query.message.chat['username']
+            reply = True
+        except:
+            query = 0
+            username = update.message.from_user.username
+            chat_id = update.message.chat['id']
+            reply = False
         log.info(
             "Got /list request from user [%s] %s",
-            update.message.chat['id'],
-            update.message.from_user.username)
-        alerts = Torrent().db.get_alerts(update.message.chat['id'])
+            chat_id,
+            username)
+        alerts = Torrent().db.get_alerts(chat_id)
         if len(alerts) == 0:
             update.message.reply_text("You have no configured alerts.")
             return True
-        msg = "<b>Configured alerts:</b>\n"
-        for alert in alerts:
+        msg = f"<b>Configured {len(alerts)} alerts:</b>\n"
+        log.info("interval: %s:%s", query, per_page+query)
+        item_num = query + 1
+        for alert in alerts[query:per_page+query]:
             msg += format_topic(
                 alert['id'],
                 alert['topic_title'],
                 alert['size'],
                 alert['info_hash'],
                 alert['reg_time'],
-                pre="\n")
-        update.message.reply_text(msg, parse_mode='HTML', disable_web_page_preview=True)
+                pre="\n",
+                item_num=item_num)
+            item_num += 1
+        log.info("list_alerts: %s", len(msg))
+        if len(alerts) > 5:
+            if len(alerts[query:per_page+query]) < per_page:
+                keyboard = [
+                  [
+                    InlineKeyboardButton("<", callback_data=f"list.{query-per_page}"),
+                  ]
+                ]
+            elif query == 0:
+                keyboard = [
+                  [
+                    InlineKeyboardButton(">", callback_data=f"list.{query+per_page}"),
+                  ]
+                ]
+            else:
+                keyboard = [
+                  [
+                    InlineKeyboardButton("<", callback_data=f"list.{query-per_page}"),
+                    InlineKeyboardButton(">", callback_data=f"list.{query+per_page}"),
+                  ]
+                ]
+            reply_markup = InlineKeyboardMarkup(keyboard)
+            if reply:
+                update.callback_query.edit_message_text(msg, reply_markup=reply_markup,  parse_mode='HTML', disable_web_page_preview=True)
+            else:
+                update.message.reply_text(msg, reply_markup=reply_markup, parse_mode='HTML', disable_web_page_preview=True)
+        else:
+            update.message.reply_text(msg, parse_mode='HTML', disable_web_page_preview=True)
 
     def handle_client(update, context):
         u_id = update.message.chat['id']
@@ -135,32 +178,36 @@ def main():
 
     def button(update: Update, context: CallbackContext) -> None:
         query = update.callback_query
+        log.info("button: %s", query.data)
         u_id = query.message.chat['id']
+        if any(w in query.data for w in ['close', 'start_rpc']):
+            torrent_id = query.data.split('.')[1]
+            torrent = Torrent(torrent_id)
 
-        torrent_id = query.data.split('.')[1]
-        torrent = Torrent(torrent_id)
-
-        msg = format_topic(
-            torrent.meta['id'],
-            torrent.meta['topic_title'],
-            torrent.meta['size'],
-            torrent.meta['info_hash'],
-            torrent.meta['reg_time'],
-            pre='You will be alerted about\n')
-        if query.data.split('.')[0] == "close":
+            msg = format_topic(
+                torrent.meta['id'],
+                torrent.meta['topic_title'],
+                torrent.meta['size'],
+                torrent.meta['info_hash'],
+                torrent.meta['reg_time'],
+                pre='You will be alerted about\n')
+            if query.data.split('.')[0] == "close":
+                query.answer()
+                query.edit_message_text(text=f"{msg}", parse_mode='HTML',
+                                        disable_web_page_preview=True)
+            elif query.data.split('.')[0] == "start_rpc":
+                query.answer()
+                easy_send(user_id=u_id, torrent_hash=torrent.meta['info_hash'])
+                query.edit_message_text(text=f"{msg}📨 <b>Sent to RPC /client</b>", parse_mode='HTML',
+                                        disable_web_page_preview=True)
+        if 'list.' in query.data:
             query.answer()
-            query.edit_message_text(text=f"{msg}", parse_mode='HTML',
-                                    disable_web_page_preview=True)
-        else:
-            easy_send(user_id=u_id, torrent_hash=torrent.meta['info_hash'])
-            query.answer()
-            query.edit_message_text(text=f"{msg}📨 <b>Sent to RPC /client</b>", parse_mode='HTML',
-                                    disable_web_page_preview=True)
+            list_alerts(update, context)
 
     updater = Updater(token, use_context=True)
     update_watcher(updater.bot)
 
-    updater.dispatcher.add_handler(CommandHandler('list', list_alerts))
+    updater.dispatcher.add_handler(MessageHandler(filters.Filters.regex(r'/list'), list_alerts))
     updater.dispatcher.add_handler(CommandHandler('client', handle_client))
     updater.dispatcher.add_handler(CommandHandler('delete_client', delete_client))
     updater.dispatcher.add_handler(MessageHandler(filters.Filters.regex(r'/delete_'), delete))
