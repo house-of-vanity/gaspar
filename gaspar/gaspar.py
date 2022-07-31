@@ -153,7 +153,7 @@ def main():
                           f"Client: <code>{tr_client_check}</code>\nStatus: <code>Conenction failed!</code>\n" \
                           r"/delete_client"
             else:
-                tr_line = "You have no configured client."
+                tr_line = "You have no configured client. Send me a link to access web torrent API like https://private.qbittorrent.my. Transmission and qBittorrent are supported now."
             update.message.reply_text(tr_line, parse_mode='HTML', disable_web_page_preview=True)
 
     def delete_client(update, context):
